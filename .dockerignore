@@ -1,0 +1,39 @@
+# Dependencies
+**/node_modules
+
+# Build outputs
+**/dist
+**/build
+
+# Logs
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# Environment files
+.env
+.env.*
+**/.env
+
+# Git
+.git
+.gitignore
+
+# Docker files (optional)
+Dockerfile
+docker-compose.yml
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Vite / React cache
+**/.vite
+**/.cache
+
+# Coverage / tests
+coverage
+
+# IDE
+.vscode
+.idea

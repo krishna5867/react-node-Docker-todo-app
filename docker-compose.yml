@@ -1,0 +1,43 @@
+services:
+  mysql:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: todo_app
+    volumes:
+      - mysql_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppassword"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  backend:
+    build: ./server
+    restart: always
+    environment:
+      PORT: 3000
+      DB_HOST: mysql
+      DB_USER: root
+      DB_PASSWORD: password
+      DB_NAME: todo_app
+      CORS_ORIGIN: http://localhost,http://localhost:80,http://localhost:5173
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  frontend:
+    build: ./react-app
+    restart: always
+    ports:
+      - "90:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql_data:
