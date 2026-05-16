@@ -1,3 +1,5 @@
+name: todo-app
+
 services:
   mysql:
     image: mysql:latest
@@ -8,7 +10,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     ports:
-      - "3307:3306"
+      - "${MYSQL_PORT:-3307}:3306"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppassword"]
       interval: 5s
@@ -16,26 +18,32 @@ services:
       retries: 20
 
   backend:
+    image: todo-app-backend:local
     build: ./server
     restart: always
     environment:
       PORT: 3000
+      FRONTEND_URL: http://${APP_HOST:-localhost}:${FRONTEND_PORT:-90}
+      BACKEND_URL: http://${APP_HOST:-localhost}:${BACKEND_PORT:-3000}
+      MYSQL_URL: ${APP_HOST:-localhost}:${MYSQL_PORT:-3307}
       DB_HOST: mysql
+      DB_PORT: 3306
       DB_USER: root
       DB_PASSWORD: password
       DB_NAME: todo_app
       CORS_ORIGIN: http://localhost,http://localhost:80,http://localhost:5173
     ports:
-      - "3000:3000"
+      - "${BACKEND_PORT:-3000}:3000"
     depends_on:
       mysql:
         condition: service_healthy
 
   frontend:
+    image: todo-app-frontend:local
     build: ./react-app
     restart: always
     ports:
-      - "90:80"
+      - "${FRONTEND_PORT:-90}:80"
     depends_on:
       - backend
 

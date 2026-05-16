@@ -6,10 +6,24 @@ const app = express();
 const port = Number(process.env.PORT) || 3000;
 const dbConfig = {
   host: process.env.DB_HOST || '127.0.0.1',
+  port: Number(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || 'password',
   database: process.env.DB_NAME || 'todo_app'
 };
+const serviceUrls = {
+  frontend: process.env.FRONTEND_URL || 'http://localhost:90',
+  backend: process.env.BACKEND_URL || `http://localhost:${port}`,
+  mysql: process.env.MYSQL_URL || `localhost:${dbConfig.port}`
+};
+const terminalStyles = {
+  green: '\x1b[32m',
+  reset: '\x1b[0m'
+};
+
+function green(text) {
+  return `${terminalStyles.green}${text}${terminalStyles.reset}`;
+}
 
 let pool;
 
@@ -160,6 +174,12 @@ async function startServer() {
 
     app.listen(port, () => {
       console.log(`Server running on port ${port}`);
+      console.log('----------------------------------------');
+      console.log('Services:');
+      console.log(`- Frontend: ${green(serviceUrls.frontend)}`);
+      console.log(`- Backend: ${green(serviceUrls.backend)}`);
+      console.log(`- MySQL: ${green(serviceUrls.mysql)}`);
+      console.log('----------------------------------------');
     });
   } catch (error) {
     console.error('Unable to start server', error);
