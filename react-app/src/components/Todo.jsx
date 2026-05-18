@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import '../css/Todo.css';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -9,31 +9,42 @@ export const Todo = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔹 Fetch todos from backend
-  const fetchTodos = async () => {
-    try {
-      setError('');
-      setLoading(true);
-      const res = await fetch(`${API_URL}/todos`);
-
-      if (!res.ok) {
-        throw new Error('Request failed');
-      }
-
-      const data = await res.json();
-      setTodos(data);
-    } catch (err) {
-      setError("Failed to fetch todos");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    let ignore = false;
+
+    const fetchTodos = async () => {
+      try {
+        setError('');
+        setLoading(true);
+        const res = await fetch(`${API_URL}/todos`);
+
+        if (!res.ok) {
+          throw new Error('Request failed');
+        }
+
+        const data = await res.json();
+
+        if (!ignore) {
+          setTodos(data);
+        }
+      } catch {
+        if (!ignore) {
+          setError("Failed to fetch todos");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    };
+
     fetchTodos();
+
+    return () => {
+      ignore = true;
+    };
   }, []);
 
-  // 🔹 Add todo
   const addTodo = async () => {
     if (!input.trim()) return;
 
@@ -54,12 +65,11 @@ export const Todo = () => {
       const createdTodo = await res.json();
       setTodos((currentTodos) => [createdTodo, ...currentTodos]);
       setInput("");
-    } catch (err) {
+    } catch {
       setError("Failed to add todo");
     }
   };
 
-  // 🔹 Toggle complete
   const toggleComplete = async (id) => {
     const todo = todos.find(t => t.id === id);
 
@@ -88,12 +98,11 @@ export const Todo = () => {
           t.id === id ? { ...t, completed: !t.completed } : t
         )
       );
-    } catch (err) {
+    } catch {
       setError("Failed to update todo");
     }
   };
 
-  // 🔹 Delete todo
   const deleteTodo = async (id) => {
     try {
       setError('');
@@ -106,7 +115,7 @@ export const Todo = () => {
       }
 
       setTodos((currentTodos) => currentTodos.filter(todo => todo.id !== id));
-    } catch (err) {
+    } catch {
       setError("Failed to delete todo");
     }
   };
