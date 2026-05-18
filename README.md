@@ -143,6 +143,65 @@ docker compose down -v
 - The frontend container serves the production build through nginx.
 - In Docker, nginx forwards `/api` requests from the frontend container to the backend container.
 
+## CI/CD deployment to EC2
+
+This repository includes a GitHub Actions workflow at `.github/workflows/ci-cd.yml`.
+
+What it does:
+
+- on pull requests to `main`, it installs dependencies, lints the frontend, builds the frontend, checks backend syntax, and validates `docker-compose.yml`
+- on pushes to `main`, it runs the same CI steps and then deploys to your EC2 instance over SSH
+
+How deployment works:
+
+- GitHub Actions connects to your EC2 instance with an SSH private key
+- it changes into your application directory on the EC2 host
+- it pulls the latest `main` branch
+- it runs `docker compose up -d --build --remove-orphans`
+
+### 1. Prepare the EC2 server
+
+Install these on the EC2 instance:
+
+- Git
+- Docker Engine
+- Docker Compose plugin
+
+Then clone this repository onto the EC2 instance, for example:
+
+```bash
+git clone <your-repository-url> /home/ec2-user/react-node-docker
+cd /home/ec2-user/react-node-docker
+cp .env.example .env
+```
+
+Update `.env` with the correct host and ports for your server.
+
+Recommended security group rules:
+
+- allow inbound HTTP on the frontend port you want to expose
+- allow inbound SSH only from trusted IPs
+- do not expose MySQL publicly
+
+### 2. Add GitHub repository secrets
+
+Set these repository secrets in GitHub:
+
+- `EC2_HOST` - public IP or DNS name of your EC2 instance
+- `EC2_USERNAME` - SSH username such as `ec2-user` or `ubuntu`
+- `EC2_SSH_KEY` - private key content used to SSH into the instance
+- `EC2_APP_DIR` - absolute path to the cloned repository on the instance
+- `EC2_PORT` - optional SSH port if you are not using the default port `22`
+
+### 3. Push to `main`
+
+After the secrets are configured, every push to `main` will:
+
+- run CI checks
+- redeploy the Docker Compose stack on EC2 automatically
+
+If you need to trigger it manually, use the `workflow_dispatch` option from the GitHub Actions tab.
+
 ## Troubleshooting
 
 If the backend cannot connect to MySQL locally:
